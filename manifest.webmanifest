@@ -1,0 +1,55 @@
+{
+  "name": "Narodeninový kalendár",
+  "short_name": "Kalendár",
+  "description": "Narodeninový kalendár rodiny – narodeniny, meniny a odpočítavanie.",
+  "lang": "sk",
+  "dir": "ltr",
+
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+
+  "background_color": "#faf0f5",
+  "theme_color": "#faf0f5",
+
+  "categories": ["lifestyle", "utilities"],
+  "prefer_related_applications": false,
+
+  "icons": [
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+
+  "shortcuts": [
+    {
+      "name": "Dnešné udalosti",
+      "short_name": "Dnes",
+      "description": "Zobraziť dnešné narodeniny a meniny",
+      "url": "./index.html#today",
+      "icons": [
+        {
+          "src": "icon-512.png",
+          "sizes": "512x512",
+          "type": "image/png"
+        }
+      ]
+    }
+  ]
+}
