@@ -333,11 +333,6 @@
       text-overflow: ellipsis;
     }
 
-    .stat-upcoming strong {
-      font-size: 1.05rem;
-      white-space: nowrap;
-    }
-
     .stat span {
       display: block;
       margin-top: 4px;
@@ -1092,8 +1087,7 @@
     }
 
     body.dark .avatar-ring-inner {
-      background: #0d0a10;
-      color: #fff;
+      background: ;
     }
 
     /* =========================================================
@@ -1186,10 +1180,6 @@
 
       .stat strong {
         font-size: 1.1rem;
-      }
-
-      .stat-upcoming strong {
-        font-size: 0.92rem;
       }
 
       .stat span {
@@ -1532,9 +1522,9 @@
             <span>Osoby</span>
           </div>
 
-          <div class="stat stat-upcoming">
+          <div class="stat">
             <strong id="upcomingCount">—</strong>
-            <span id="upcomingLabel">Najbližšie</span>
+            <span>Najbližší sviatok</span>
           </div>
 
           <div class="stat">
@@ -2855,32 +2845,15 @@
           upcoming[0];
 
 
-        const upcomingCount =
-          document.getElementById('upcomingCount');
-
-        const upcomingLabel =
-          document.getElementById('upcomingLabel');
-
-        if (first) {
-          const firstName = first.person
-            ? first.person.name
-            : first.label.replace('★ ', '');
-
-          const firstType =
-            first.type === 'birthday'
-              ? 'narodeniny'
-              : 'meniny';
-
-          upcomingCount.textContent = firstName;
-
-          upcomingLabel.textContent =
-            first.days === 0
-              ? `${firstType} • DNES`
-              : `${firstType} • ${daysLabel(first.days)}`;
-        } else {
-          upcomingCount.textContent = '—';
-          upcomingLabel.textContent = 'Žiadna udalosť';
-        }
+        document.getElementById('upcomingCount')
+          .textContent =
+            first
+              ? (
+                  first.days === 0
+                    ? 'DNES'
+                    : `${first.days} dní`
+                )
+              : '—';
 
       };
 
