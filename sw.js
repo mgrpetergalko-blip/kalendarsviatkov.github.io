@@ -1,9 +1,9 @@
 /* =========================================================
    SERVICE WORKER – Narodeninový kalendár
-   OPRAVA: verzia zvýšená na v4, aby sa vynútila aktualizácia
+   OPRAVA: verzia zvýšená na v5
    ========================================================= */
 
-const CACHE_VERSION = 'v4';
+const CACHE_VERSION = 'v5';
 const CACHE_STATIC  = `narodeninovy-kalendar-static-${CACHE_VERSION}`;
 const CACHE_RUNTIME = `narodeninovy-kalendar-runtime-${CACHE_VERSION}`;
 const CACHE_FONTS   = `narodeninovy-kalendar-fonts-${CACHE_VERSION}`;
