@@ -145,6 +145,40 @@
       font-size: 25px;
       box-shadow: 0 8px 32px rgba(248, 180, 200, 0.3);
       transform: rotate(-6deg);
+
+      /* NOVÉ – klikateľná ikona aktualizácie */
+      cursor: pointer;
+      user-select: none;
+      -webkit-user-select: none;
+      outline: none;
+      transition:
+        transform 0.25s ease,
+        box-shadow 0.25s ease;
+    }
+
+    .brand-icon:hover {
+      transform: rotate(-6deg) scale(1.08);
+      box-shadow: 0 10px 38px rgba(248, 180, 200, 0.45);
+    }
+
+    .brand-icon:active {
+      transform: rotate(-6deg) scale(0.95);
+    }
+
+    .brand-icon:focus-visible {
+      box-shadow:
+        0 0 0 3px rgba(251, 196, 213, 0.6),
+        0 8px 32px rgba(248, 180, 200, 0.3);
+    }
+
+    .brand-icon.spinning {
+      animation: spinIcon 1s linear infinite;
+      pointer-events: none;
+    }
+
+    @keyframes spinIcon {
+      from { transform: rotate(-6deg) rotate(0deg); }
+      to   { transform: rotate(-6deg) rotate(360deg); }
     }
 
     .brand-text h1 {
@@ -208,7 +242,6 @@
 
     /* =========================================================
        HERO
-       TEXT "OSLAVY RODINY..." ODSTRÁNENÝ
     ========================================================= */
 
     .hero {
@@ -1087,6 +1120,10 @@
       background: linear-gradient(135deg, #d4a0b8, #b8849c);
     }
 
+    body.dark .brand-icon:hover {
+      box-shadow: 0 10px 38px rgba(212, 160, 184, 0.35);
+    }
+
     body.dark .topbar {
       border-bottom-color: rgba(255, 255, 255, 0.06);
     }
@@ -1504,7 +1541,16 @@
     <!-- TOPBAR -->
     <div class="topbar">
       <div class="brand">
-        <div class="brand-icon">🎂</div>
+
+        <!-- NOVÉ: klikateľná ikona torty na aktualizáciu -->
+        <div
+          class="brand-icon"
+          id="brandIcon"
+          role="button"
+          tabindex="0"
+          aria-label="Skontrolovať aktualizácie"
+          title="Skontrolovať aktualizácie"
+        >🎂</div>
 
         <div class="brand-text">
           <h1></h1>
@@ -1640,7 +1686,7 @@
     <!-- FOOTER -->
     <div class="footer">
       <p class="credit">
-        vytvoril <strong>Mgr. Peter Galko</strong> 
+        vytvoril <strong>Mgr. Peter Galko</strong> 💕
       </p>
     </div>
 
@@ -2863,14 +2909,10 @@
 
         if (first) {
 
-          /* ---------- OPRAVA: zobraz MENO, nie typ ---------- */
-
           let firstName = '';
 
           if (first.person) {
 
-            /* Pri viacslovných menách (napr. "Anna, Hana")
-               vezmi len prvé meno, aby sa to zmestilo do karty */
             firstName =
               first.person.name
                 .split(',')[0]
@@ -2878,8 +2920,6 @@
 
           } else {
 
-            /* Pri sviatkoch bez konkrétnej osoby (napr. "Nový rok")
-               použi názov sviatku */
             firstName =
               first.label
                 .replace('★ ', '')
@@ -2893,10 +2933,8 @@
               ? 'narodeniny'
               : 'meniny';
 
-          /* Veľké písmo: MENO OSOBY */
           upcomingCount.textContent = firstName;
 
-          /* Malé písmo: TYP • KEDY */
           upcomingLabel.textContent =
             first.days === 0
               ? `${firstType} • DNES`
@@ -3086,22 +3124,102 @@
 
 
       /* =========================================================
-         SERVICE WORKER
+         SERVICE WORKER + MANUÁLNA AKTUALIZÁCIA
       ========================================================= */
 
-      if ('serviceWorker' in navigator) {
+      const brandIcon = document.getElementById('brandIcon');
 
+      let refreshing = false;
+
+      /* Automatický reload po prevzatí kontroly novým SW */
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.addEventListener(
+          'controllerchange',
+          () => {
+            if (refreshing) return;
+            refreshing = true;
+            window.location.reload();
+          }
+        );
+      }
+
+      const checkForUpdates = async () => {
+
+        if (!('serviceWorker' in navigator)) {
+          showToast('Aktualizácie nie sú podporované');
+          return;
+        }
+
+        brandIcon.classList.add('spinning');
+
+        try {
+
+          const reg =
+            await navigator.serviceWorker.getRegistration();
+
+          if (!reg) {
+            await navigator.serviceWorker.register('sw.js');
+            brandIcon.classList.remove('spinning');
+            showToast('Aplikácia pripravená offline ✨');
+            return;
+          }
+
+          /* Vynútiť kontrolu nového SW na serveri */
+          await reg.update();
+
+          /* Ak existuje čakajúci SW, aktivuj ho */
+          if (reg.waiting) {
+            reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+            showToast('Aktualizujem…');
+            return;
+          }
+
+          /* Ak sa práve inštaluje nový SW */
+          if (reg.installing) {
+            showToast('Sťahujem novú verziu…');
+            return;
+          }
+
+          /* Inak – všetko je aktuálne */
+          setTimeout(() => {
+            brandIcon.classList.remove('spinning');
+            showToast('Máš najnovšiu verziu ✓');
+          }, 600);
+
+        } catch (err) {
+
+          brandIcon.classList.remove('spinning');
+          showToast('Aktualizácia zlyhala');
+
+        }
+
+      };
+
+      /* Klik + klávesnica (Enter / Space) pre prístupnosť */
+      brandIcon.addEventListener('click', checkForUpdates);
+
+      brandIcon.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          checkForUpdates();
+        }
+      });
+
+      /* Poistka: ak by spinner ostal visieť, po 8s ho vypni */
+      setInterval(() => {
+        brandIcon.classList.remove('spinning');
+      }, 8000);
+
+      /* Registrácia SW pri načítaní */
+      if ('serviceWorker' in navigator) {
         window.addEventListener(
           'load',
           () => {
-
             navigator.serviceWorker
               .register('sw.js')
               .catch(() => {});
-
           }
         );
-
       }
 
     })();
