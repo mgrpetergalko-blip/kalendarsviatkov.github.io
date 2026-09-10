@@ -2862,24 +2862,51 @@
           document.getElementById('upcomingLabel');
 
         if (first) {
-          const firstName = first.person
-            ? first.person.name
-            : first.label.replace('★ ', '');
+
+          /* ---------- OPRAVA: zobraz MENO, nie typ ---------- */
+
+          let firstName = '';
+
+          if (first.person) {
+
+            /* Pri viacslovných menách (napr. "Anna, Hana")
+               vezmi len prvé meno, aby sa to zmestilo do karty */
+            firstName =
+              first.person.name
+                .split(',')[0]
+                .trim();
+
+          } else {
+
+            /* Pri sviatkoch bez konkrétnej osoby (napr. "Nový rok")
+               použi názov sviatku */
+            firstName =
+              first.label
+                .replace('★ ', '')
+                .split(',')[0]
+                .trim();
+
+          }
 
           const firstType =
             first.type === 'birthday'
               ? 'narodeniny'
               : 'meniny';
 
+          /* Veľké písmo: MENO OSOBY */
           upcomingCount.textContent = firstName;
 
+          /* Malé písmo: TYP • KEDY */
           upcomingLabel.textContent =
             first.days === 0
               ? `${firstType} • DNES`
               : `${firstType} • ${daysLabel(first.days)}`;
+
         } else {
+
           upcomingCount.textContent = '—';
           upcomingLabel.textContent = 'Žiadna udalosť';
+
         }
 
       };
