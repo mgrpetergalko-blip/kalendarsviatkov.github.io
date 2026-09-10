@@ -2738,15 +2738,20 @@
 
       /* =========================================================
          SERVICE WORKER + MANUÁLNA AKTUALIZÁCIA
-         OPRAVA: kompletná prepísaná logika pre spoľahlivosť na iOS
+         OPRAVA: robustná verzia pre iOS
       ========================================================= */
 
       const brandIcon = document.getElementById('brandIcon');
 
       let refreshing = false;
 
+      /* OPRAVA: detekcia prostredia */
+      const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
+      const isStandalone =
+        window.navigator.standalone === true ||
+        window.matchMedia('(display-mode: standalone)').matches;
 
-      /* OPRAVA: pri controllerchange najprv zobraz toast, potom reload */
+      /* OPRAVA: po prevzatí kontroly novým SW – vizuálna zmena + dlhší delay */
       if ('serviceWorker' in navigator) {
 
         navigator.serviceWorker.addEventListener('controllerchange', () => {
@@ -2755,99 +2760,134 @@
 
           refreshing = true;
 
+          brandIcon.textContent = '🔄';
           showToast('Aktualizujem…');
 
-          /* OPRAVA: oneskorenie 900 ms, aby používateľ stihol vidieť toast */
-          setTimeout(() => window.location.reload(), 900);
+          setTimeout(() => window.location.reload(), 1500);
 
         });
 
       }
 
 
-      /* OPRAVA: kompletná nová funkcia checkForUpdates s updatefound eventom */
       const checkForUpdates = async () => {
 
-        /* OPRAVA: hint pre iOS v Safari (nie standalone) */
-        const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
-        const isStandalone = window.navigator.standalone === true;
-
+        /* OPRAVA 1: podpora SW */
         if (!('serviceWorker' in navigator)) {
           showToast('Aktualizácie nie sú podporované');
           return;
         }
 
-        if (isIOS && !isStandalone) {
-          showToast('Pre spoľahlivé aktualizácie si appku pridaj na plochu 📱');
+        /* OPRAVA 2: HTTPS / localhost */
+        const isSecure =
+          location.protocol === 'https:' ||
+          location.hostname === 'localhost' ||
+          location.hostname === '127.0.0.1';
+
+        if (!isSecure) {
+          showToast('Aktualizácie vyžadujú HTTPS 🔒');
+          return;
         }
 
-        /* OPRAVA: vizuálny feedback – spinner + pulse */
-        brandIcon.classList.add('spinning');
-        brandIcon.classList.add('pulse');
+        /* OPRAVA 3: iOS Safari (nie na ploche) → vôbec neskúšaj */
+        if (isIOS && !isStandalone) {
+          showToast('Pre aktualizácie si appku pridaj na plochu 📱');
+          return;
+        }
 
-        /* OPRAVA: minimálna doba spinnera 1,8 s */
+        /* OPRAVA 4: offline */
+        if (!navigator.onLine) {
+          showToast('Si offline – skús neskôr 📴');
+          return;
+        }
+
+        /* OPRAVA 5: vizuálny feedback */
+        brandIcon.classList.add('spinning', 'pulse');
+
         const minSpin = new Promise(r => setTimeout(r, 1800));
+
+        /* OPRAVA 6: poistka 15 s spustená až pri kliku */
+        const safety = setTimeout(() => {
+          brandIcon.classList.remove('spinning', 'pulse');
+          showToast('Aktualizácia trvá príliš dlho ⏱️');
+        }, 15000);
 
         try {
 
           const reg = await navigator.serviceWorker.getRegistration();
 
+          /* Žiadna registrácia → zaregistruj */
           if (!reg) {
+
             await navigator.serviceWorker.register('sw.js');
             await minSpin;
+            clearTimeout(safety);
+
             brandIcon.classList.remove('spinning', 'pulse');
             brandIcon.textContent = '✅';
             setTimeout(() => brandIcon.textContent = '🎂', 2000);
+
             showToast('Aplikácia pripravená offline ✨');
             return;
           }
-
-          /* OPRAVA: sledovanie updatefound eventu */
-          let newVersionFound = false;
-
-          const onUpdateFound = () => {
-            newVersionFound = true;
-          };
-
-          reg.addEventListener('updatefound', onUpdateFound);
 
           /* Vynútiť kontrolu nového SW na serveri */
           await reg.update();
           await minSpin;
 
+          clearTimeout(safety);
           brandIcon.classList.remove('spinning');
 
-
-          /* OPRAVA: priorita – waiting > installing > aktuálne */
+          /* OPRAVA 7: priorita waiting > installing > aktuálne */
           if (reg.waiting) {
-
             reg.waiting.postMessage({ type: 'SKIP_WAITING' });
             showToast('Aktualizujem…');
-            /* spinner necháme bežať, kým nepríde controllerchange */
+            /* spinner beží, čakáme na controllerchange */
             return;
           }
 
-          if (reg.installing || newVersionFound) {
-
+          if (reg.installing) {
             brandIcon.classList.remove('pulse');
             showToast('Sťahujem novú verziu…');
             return;
           }
 
-          /* Všetko je aktuálne */
+          /* Všetko aktuálne */
           brandIcon.classList.remove('pulse');
           brandIcon.textContent = '✅';
           setTimeout(() => brandIcon.textContent = '🎂', 2000);
+
           showToast('Máš najnovšiu verziu ✓');
 
         } catch (err) {
 
           await minSpin;
+          clearTimeout(safety);
+
           brandIcon.classList.remove('spinning', 'pulse');
           brandIcon.textContent = '⚠️';
           setTimeout(() => brandIcon.textContent = '🎂', 2000);
-          showToast('Aktualizácia zlyhala');
 
+          /* OPRAVA 8: log + rozlíšenie chýb */
+          console.warn('[SW update] error:', err);
+
+          const msg = String(err?.message || err || '');
+
+          let reason = 'Aktualizácia zlyhala';
+
+          if (!navigator.onLine) {
+            reason = 'Si offline 📴';
+          } else if (/SecurityError|blocked/i.test(msg)) {
+            reason = 'Prehliadač blokuje aktualizácie 🔒';
+          } else if (/Load failed|Failed to fetch|NetworkError/i.test(msg)) {
+            reason = 'Sieť nedostupná 🌐';
+          } else if (/NotSupportedError/i.test(msg)) {
+            reason = 'Prehliadač nepodporuje SW 🚫';
+          } else if (/404|MIME/i.test(msg)) {
+            reason = 'Chyba servera (sw.js) ⚙️';
+          }
+
+          showToast(reason);
         }
 
       };
@@ -2864,12 +2904,7 @@
       });
 
 
-      /* OPRAVA: poistka 12 s namiesto 8 s – aby neprerušila dlhšiu aktualizáciu */
-      setInterval(() => {
-        if (!document.querySelector('.brand-icon.spinning')) return;
-        /* Iba ak spinner visí príliš dlho bez zmeny */
-        brandIcon.classList.remove('spinning', 'pulse');
-      }, 12000);
+      /* OPRAVA 9: globálny setInterval(12000) ODSTRÁNENÝ – nahradený safety timeoutom v checkForUpdates */
 
 
       /* Registrácia SW pri načítaní */
