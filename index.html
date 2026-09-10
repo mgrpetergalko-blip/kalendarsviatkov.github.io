@@ -1,0 +1,2886 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+
+  <title>Narodeninový kalendár</title>
+
+  <meta name="theme-color" content="#faf0f5">
+  <meta name="description" content="Narodeninový kalendár rodiny – narodeniny, meniny a odpočítavanie.">
+
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+
+  <meta name="apple-mobile-web-app-title" content="Narodeninový kalendár">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+    rel="stylesheet"
+  >
+
+  <style>
+    /* =========================================================
+       RESET
+    ========================================================= */
+
+    *,
+    *::before,
+    *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+      -webkit-text-size-adjust: 100%;
+    }
+
+    body {
+      min-height: 100vh;
+      min-height: 100dvh;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #faf0f5;
+      color: #000;
+      overflow-x: hidden;
+      transition: background 0.4s ease, color 0.4s ease;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+
+    button {
+      font: inherit;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* =========================================================
+       PARTICLES
+    ========================================================= */
+
+    .bg-particles {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+
+    .particle {
+      position: absolute;
+      width: 4px;
+      height: 4px;
+      background: rgba(255, 182, 193, 0.25);
+      border-radius: 50%;
+      animation: floatParticle 25s infinite linear;
+    }
+
+    @keyframes floatParticle {
+      0% {
+        transform: translateY(100vh) rotate(0deg);
+        opacity: 0;
+      }
+
+      10% {
+        opacity: 1;
+      }
+
+      90% {
+        opacity: 1;
+      }
+
+      100% {
+        transform: translateY(-100vh) rotate(720deg);
+        opacity: 0;
+      }
+    }
+
+    /* =========================================================
+       APP
+    ========================================================= */
+
+    .app {
+      width: 100%;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 24px 20px 50px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* =========================================================
+       TOPBAR
+    ========================================================= */
+
+    .topbar {
+      display: flex;
+      justify-content: flex-start;
+      align-items: center;
+      padding: 8px 0 14px;
+      margin-bottom: 24px;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .brand-icon {
+      width: 50px;
+      height: 50px;
+      flex: 0 0 50px;
+      border-radius: 15px;
+      background: linear-gradient(135deg, #fbc4d5, #f8b4c8);
+      display: grid;
+      place-items: center;
+      font-size: 25px;
+      box-shadow: 0 8px 32px rgba(248, 180, 200, 0.3);
+      transform: rotate(-6deg);
+
+      cursor: pointer;
+      user-select: none;
+      -webkit-user-select: none;
+      outline: none;
+      transition:
+        transform 0.25s ease,
+        box-shadow 0.25s ease;
+    }
+
+    .brand-icon:hover {
+      transform: rotate(-6deg) scale(1.08);
+      box-shadow: 0 10px 38px rgba(248, 180, 200, 0.45);
+    }
+
+    .brand-icon:active {
+      transform: rotate(-6deg) scale(0.95);
+    }
+
+    .brand-icon:focus-visible {
+      box-shadow:
+        0 0 0 3px rgba(251, 196, 213, 0.6),
+        0 8px 32px rgba(248, 180, 200, 0.3);
+    }
+
+    .brand-icon.spinning {
+      animation: spinIcon 1s linear infinite;
+      pointer-events: none;
+    }
+
+    /* OPRAVA: viditeľný pulz počas aktualizácie */
+    .brand-icon.pulse {
+      animation: pulseIcon 1.2s ease-in-out infinite;
+    }
+
+    @keyframes spinIcon {
+      from { transform: rotate(-6deg) rotate(0deg); }
+      to   { transform: rotate(-6deg) rotate(360deg); }
+    }
+
+    @keyframes pulseIcon {
+      0%, 100% { box-shadow: 0 8px 32px rgba(248, 180, 200, 0.3); }
+      50%      { box-shadow: 0 8px 32px rgba(248, 180, 200, 0.9); }
+    }
+
+    .brand-text h1 {
+      font-size: 1.2rem;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      color: #000;
+    }
+
+    .brand-text p {
+      font-size: 0.68rem;
+      color: #000;
+      letter-spacing: 0.4px;
+      margin-top: 1px;
+      opacity: 0.55;
+    }
+
+    /* =========================================================
+       THEME BUTTON
+    ========================================================= */
+
+    .theme-toggle {
+      position: fixed;
+      right: 18px;
+      bottom: calc(22px + env(safe-area-inset-bottom));
+      width: 50px;
+      height: 50px;
+      border-radius: 16px;
+
+      background: rgba(255, 255, 255, 0.78);
+      border: 1px solid rgba(0, 0, 0, 0.08);
+
+      color: #FF2800;
+      font-size: 1.25rem;
+      cursor: pointer;
+
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+
+      display: grid;
+      place-items: center;
+
+      box-shadow: 0 10px 35px rgba(0, 0, 0, 0.12);
+
+      z-index: 500;
+      transition:
+        transform 0.25s ease,
+        background 0.25s ease,
+        border-color 0.25s ease;
+    }
+
+    .theme-toggle:hover {
+      transform: scale(1.06);
+      background: rgba(255, 255, 255, 0.95);
+    }
+
+    .theme-toggle:active {
+      transform: scale(0.94);
+    }
+
+    /* =========================================================
+       HERO
+    ========================================================= */
+
+    .hero {
+      padding: 26px 30px;
+      border-radius: 28px;
+
+      background:
+        linear-gradient(
+          135deg,
+          rgba(251, 196, 213, 0.15),
+          rgba(240, 210, 220, 0.08)
+        );
+
+      border: 1px solid rgba(0, 0, 0, 0.06);
+
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+
+      margin-bottom: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -100px;
+      right: -100px;
+      width: 320px;
+      height: 320px;
+
+      background:
+        radial-gradient(
+          circle,
+          rgba(251, 196, 213, 0.12),
+          transparent 70%
+        );
+
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 1;
+    }
+
+    .live-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+
+      padding: 7px 13px;
+      border-radius: 999px;
+
+      background: rgba(255, 255, 255, 0.45);
+      border: 1px solid rgba(0, 0, 0, 0.06);
+
+      font-size: 0.72rem;
+      color: #000;
+
+      white-space: nowrap;
+    }
+
+    .live-dot {
+      width: 8px;
+      height: 8px;
+      flex: 0 0 8px;
+      border-radius: 50%;
+      background: #b8d4b8;
+      animation: pulse-dot 2s infinite;
+    }
+
+    @keyframes pulse-dot {
+      0%,
+      100% {
+        opacity: 1;
+        transform: scale(1);
+      }
+
+      50% {
+        opacity: 0.4;
+        transform: scale(0.8);
+      }
+    }
+
+    /* =========================================================
+       STATS
+    ========================================================= */
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      max-width: 560px;
+      margin-top: 18px;
+    }
+
+    .stat {
+      min-width: 0;
+      padding: 13px 14px;
+      border-radius: 15px;
+
+      background: rgba(255, 255, 255, 0.4);
+      border: 1px solid rgba(0, 0, 0, 0.04);
+
+      transition: transform 0.25s ease, background 0.25s ease;
+    }
+
+    .stat:hover {
+      background: rgba(251, 196, 213, 0.1);
+      transform: translateY(-2px);
+    }
+
+    .stat strong {
+      display: block;
+      font-size: 1.45rem;
+      line-height: 1.1;
+      font-weight: 800;
+      color: #000;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .stat-upcoming strong {
+      font-size: 1.05rem;
+      white-space: nowrap;
+    }
+
+    .stat span {
+      display: block;
+      margin-top: 4px;
+      font-size: 0.58rem;
+      text-transform: uppercase;
+      letter-spacing: 0.7px;
+      color: #000;
+      opacity: 0.5;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* =========================================================
+       SECTIONS
+    ========================================================= */
+
+    .section {
+      margin-top: 18px;
+      padding: 24px;
+      border-radius: 26px;
+
+      background: rgba(255, 255, 255, 0.3);
+      border: 1px solid rgba(0, 0, 0, 0.04);
+
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+
+      margin-bottom: 18px;
+
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .section-header h3 {
+      font-size: 1.05rem;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+      color: #000;
+    }
+
+    .section-header p {
+      font-size: 0.72rem;
+      color: #000;
+      margin-top: 3px;
+      opacity: 0.5;
+    }
+
+    /* =========================================================
+       PEOPLE
+    ========================================================= */
+
+    .people-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .person-card {
+      min-width: 0;
+      padding: 20px 16px 17px;
+
+      border-radius: 21px;
+
+      background: rgba(255, 255, 255, 0.5);
+      border: 1px solid rgba(0, 0, 0, 0.04);
+
+      text-align: center;
+
+      transition:
+        transform 0.3s ease,
+        box-shadow 0.3s ease;
+
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .person-card:hover {
+      transform: translateY(-5px);
+      border-color: rgba(251, 196, 213, 0.2);
+      box-shadow: 0 18px 45px rgba(200, 160, 180, 0.1);
+    }
+
+    .avatar-ring {
+      width: 72px;
+      height: 72px;
+
+      border-radius: 50%;
+      margin: 0 auto 10px;
+      padding: 3px;
+
+      background:
+        conic-gradient(
+          from 0deg,
+          #fbc4d5,
+          #f8d4e0,
+          #f0c8d8,
+          #fbc4d5
+        );
+    }
+
+    .avatar-ring-inner {
+      width: 100%;
+      height: 100%;
+
+      border-radius: 50%;
+
+      background: #faf0f5;
+
+      display: grid;
+      place-items: center;
+
+      font-size: 1.65rem;
+      font-weight: 800;
+      color: #000;
+    }
+
+    .person-card h4 {
+      font-size: 0.95rem;
+      font-weight: 700;
+      margin-bottom: 2px;
+      color: #000;
+    }
+
+    .person-card .role {
+      font-size: 0.68rem;
+      color: #000;
+      margin-bottom: 10px;
+      opacity: 0.5;
+    }
+
+    .person-card .dates {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 5px;
+    }
+
+    .person-card .dates div {
+      min-width: 0;
+      padding: 6px 3px;
+      border-radius: 9px;
+      background: rgba(255, 255, 255, 0.3);
+      font-size: 0.65rem;
+      overflow: hidden;
+    }
+
+    .person-card .dates div small {
+      display: block;
+      font-size: 0.46rem;
+      text-transform: uppercase;
+      color: #000;
+      opacity: 0.4;
+      letter-spacing: 0.3px;
+      white-space: nowrap;
+    }
+
+    .person-card .dates div strong {
+      display: block;
+      font-size: 0.64rem;
+      font-weight: 700;
+      color: #000;
+      white-space: nowrap;
+    }
+
+    .person-card .next-badge {
+      margin-top: 11px;
+      padding-top: 11px;
+
+      border-top: 1px solid rgba(0, 0, 0, 0.06);
+
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+
+      gap: 5px;
+
+      font-size: 0.64rem;
+      text-align: left;
+    }
+
+    .person-card .next-badge > span:first-child {
+      min-width: 0;
+      color: #000;
+      opacity: 0.5;
+    }
+
+    .person-card .next-badge .days {
+      flex-shrink: 0;
+      font-weight: 700;
+      color: #000;
+      font-size: 0.75rem;
+      text-align: right;
+    }
+
+    .person-card .next-badge .days.today {
+      color: #82aa82;
+    }
+
+    /* =========================================================
+       CALENDAR
+    ========================================================= */
+
+    .calendar-wrap {
+      display: grid;
+      grid-template-columns: minmax(0, 1.6fr) minmax(260px, 0.9fr);
+      gap: 16px;
+    }
+
+    .calendar-panel,
+    .upcoming-panel {
+      min-width: 0;
+      padding: 18px;
+
+      border-radius: 21px;
+
+      background: rgba(255, 255, 255, 0.2);
+      border: 1px solid rgba(0, 0, 0, 0.04);
+    }
+
+    .calendar-nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+
+      margin-bottom: 14px;
+      gap: 10px;
+    }
+
+    .calendar-nav .month {
+      font-weight: 700;
+      font-size: 1rem;
+      letter-spacing: -0.3px;
+      color: #000;
+    }
+
+    .calendar-nav .navs {
+      display: flex;
+      gap: 5px;
+    }
+
+    .calendar-nav .navs button {
+      width: 36px;
+      height: 36px;
+
+      border-radius: 11px;
+
+      background: rgba(255, 255, 255, 0.3);
+      border: 1px solid rgba(0, 0, 0, 0.06);
+
+      color: #000;
+      cursor: pointer;
+      font-size: 1.05rem;
+    }
+
+    .week,
+    .days-grid {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 3px;
+    }
+
+    .week {
+      margin-bottom: 3px;
+    }
+
+    .week div {
+      text-align: center;
+      font-size: 0.58rem;
+      color: #000;
+      font-weight: 600;
+      padding: 4px 0;
+      letter-spacing: 0.3px;
+      opacity: 0.4;
+    }
+
+    .day {
+      min-width: 0;
+      min-height: 66px;
+
+      border-radius: 12px;
+
+      background: rgba(255, 255, 255, 0.15);
+      padding: 4px 3px;
+
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+
+      cursor: pointer;
+      border: 1px solid transparent;
+
+      transition: background 0.2s ease, border-color 0.2s ease;
+      overflow: hidden;
+    }
+
+    .day:hover {
+      background: rgba(251, 196, 213, 0.1);
+      border-color: rgba(251, 196, 213, 0.15);
+    }
+
+    .day.muted {
+      opacity: 0.2;
+    }
+
+    .day.today {
+      border-color: #d4a0b8;
+      background: rgba(212, 160, 184, 0.08);
+    }
+
+    .day .day-num {
+      width: 100%;
+      font-size: 0.68rem;
+      font-weight: 600;
+      color: #000;
+      text-align: left;
+      opacity: 0.4;
+    }
+
+    .day.today .day-num {
+      opacity: 1;
+      color: #d4a0b8;
+    }
+
+    .day .event-dot {
+      width: 100%;
+
+      font-size: 0.43rem;
+      line-height: 1.2;
+
+      font-weight: 600;
+
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+
+      text-align: center;
+
+      padding: 2px 3px;
+      border-radius: 999px;
+
+      margin-top: 2px;
+
+      background: rgba(255, 255, 255, 0.1);
+      color: #000;
+      opacity: 0.5;
+    }
+
+    .day .event-dot.bday {
+      background: rgba(251, 196, 213, 0.15);
+      color: #000;
+      opacity: 0.8;
+    }
+
+    .day .event-dot.name {
+      background: rgba(180, 200, 220, 0.1);
+      color: #000;
+      opacity: 0.6;
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+
+      margin-top: 11px;
+
+      font-size: 0.58rem;
+      color: #000;
+      opacity: 0.4;
+    }
+
+    .legend span {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .legend i {
+      width: 7px;
+      height: 7px;
+      border-radius: 3px;
+    }
+
+    .legend .l-bday {
+      background: #fbc4d5;
+    }
+
+    .legend .l-name {
+      background: rgba(180, 200, 220, 0.4);
+    }
+
+    .legend .l-today {
+      border: 1.5px solid #d4a0b8;
+      background: transparent;
+    }
+
+    /* =========================================================
+       UPCOMING
+    ========================================================= */
+
+    .upcoming-title {
+      font-size: 0.88rem;
+      font-weight: 700;
+      margin-bottom: 2px;
+      color: #000;
+    }
+
+    .upcoming-subtitle {
+      font-size: 0.68rem;
+      color: #000;
+      opacity: 0.3;
+      margin-bottom: 12px;
+    }
+
+    .upcoming-list {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    .upcoming-item {
+      min-width: 0;
+
+      display: flex;
+      align-items: center;
+      gap: 9px;
+
+      padding: 9px 10px;
+      border-radius: 14px;
+
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(0, 0, 0, 0.04);
+    }
+
+    .upcoming-item .icon {
+      width: 33px;
+      height: 33px;
+      flex: 0 0 33px;
+
+      border-radius: 10px;
+
+      display: grid;
+      place-items: center;
+
+      font-size: 14px;
+    }
+
+    .upcoming-item .icon.bday {
+      background: rgba(251, 196, 213, 0.1);
+    }
+
+    .upcoming-item .icon.name {
+      background: rgba(180, 200, 220, 0.06);
+    }
+
+    .upcoming-item .info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .upcoming-item .info b {
+      display: block;
+
+      font-size: 0.73rem;
+      font-weight: 600;
+      color: #000;
+
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .upcoming-item .info small {
+      display: block;
+
+      font-size: 0.58rem;
+      color: #000;
+      opacity: 0.4;
+
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .upcoming-item .count {
+      flex-shrink: 0;
+
+      font-size: 0.64rem;
+      font-weight: 700;
+
+      color: #000;
+      opacity: 0.3;
+      white-space: nowrap;
+    }
+
+    .upcoming-item .count.today {
+      color: #82aa82;
+      opacity: 1;
+    }
+
+    /* =========================================================
+       AGE CARDS
+    ========================================================= */
+
+    .age-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .age-card {
+      min-width: 0;
+
+      padding: 16px 17px;
+      border-radius: 18px;
+
+      background: rgba(255, 255, 255, 0.3);
+      border: 1px solid rgba(0, 0, 0, 0.04);
+
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+
+      gap: 8px;
+    }
+
+    .age-card .info {
+      min-width: 0;
+    }
+
+    .age-card .info h4 {
+      font-size: 0.86rem;
+      font-weight: 600;
+      color: #000;
+
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .age-card .info p {
+      font-size: 0.6rem;
+      color: #000;
+      opacity: 0.4;
+
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .age-card .number {
+      flex-shrink: 0;
+
+      font-size: 1.8rem;
+      line-height: 1;
+      font-weight: 800;
+
+      color: #000;
+    }
+
+    /* =========================================================
+       FOOTER
+    ========================================================= */
+
+    .footer {
+      text-align: center;
+      padding: 28px 0 15px;
+    }
+
+    .footer .credit {
+      font-size: 0.66rem;
+      color: #000;
+      opacity: 0.3;
+      letter-spacing: 0.4px;
+    }
+
+    .footer .credit strong {
+      color: #000;
+      font-weight: 700;
+      opacity: 0.8;
+    }
+
+    /* =========================================================
+       TOAST
+       OPRAVA: vycentrovaný, väčší, s tieňom, viditeľnejší na iPhone
+    ========================================================= */
+
+    .toast {
+      position: fixed;
+
+      /* OPRAVA: vyššie nad spodnou lištou Safari na iPhone */
+      bottom: calc(120px + env(safe-area-inset-bottom));
+      left: 50%;
+
+      transform: translate(-50%, 20px);
+
+      opacity: 0;
+      pointer-events: none;
+
+      /* OPRAVA: výraznejší padding a font */
+      padding: 16px 26px;
+
+      border-radius: 999px;
+
+      background: rgba(255, 255, 255, 0.98);
+
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+
+      border: 1px solid rgba(0, 0, 0, 0.08);
+
+      color: #000;
+      font-size: 0.9rem;
+      font-weight: 600;
+      line-height: 1.35;
+
+      /* OPRAVA: silnejší tieň, aby bol viditeľný na akomkoľvek pozadí */
+      box-shadow:
+        0 12px 40px rgba(0, 0, 0, 0.18),
+        0 2px 8px rgba(0, 0, 0, 0.08);
+
+      transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+
+      /* OPRAVA: najvyšší možný z-index */
+      z-index: 2147483647;
+
+      width: max-content;
+      max-width: calc(100vw - 40px);
+
+      text-align: center;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translate(-50%, 0);
+    }
+
+    /* =========================================================
+       DARK THEME
+    ========================================================= */
+
+    body.dark {
+      background: #0d0a10;
+      color: #fff;
+    }
+
+    body.dark .bg-particles .particle {
+      background: rgba(200, 160, 180, 0.15);
+    }
+
+    body.dark .section,
+    body.dark .calendar-panel,
+    body.dark .upcoming-panel,
+    body.dark .hero {
+      background: rgba(255, 255, 255, 0.04);
+      border-color: rgba(255, 255, 255, 0.06);
+    }
+
+    body.dark .stat,
+    body.dark .person-card,
+    body.dark .age-card,
+    body.dark .upcoming-item {
+      background: rgba(255, 255, 255, 0.04);
+      border-color: rgba(255, 255, 255, 0.06);
+    }
+
+    body.dark .brand-text h1,
+    body.dark .brand-text p,
+    body.dark .hero p,
+    body.dark .stat strong,
+    body.dark .stat span,
+    body.dark .person-card h4,
+    body.dark .person-card .role,
+    body.dark .person-card .dates div strong,
+    body.dark .person-card .dates div small,
+    body.dark .person-card .next-badge span,
+    body.dark .person-card .next-badge .days,
+    body.dark .day .day-num,
+    body.dark .day .event-dot,
+    body.dark .week div,
+    body.dark .calendar-nav .month,
+    body.dark .calendar-nav .navs button,
+    body.dark .upcoming-title,
+    body.dark .upcoming-subtitle,
+    body.dark .upcoming-item .info b,
+    body.dark .upcoming-item .info small,
+    body.dark .upcoming-item .count,
+    body.dark .age-card .info h4,
+    body.dark .age-card .info p,
+    body.dark .age-card .number,
+    body.dark .section-header h3,
+    body.dark .section-header p,
+    body.dark .legend,
+    body.dark .live-badge,
+    body.dark .footer .credit,
+    body.dark .footer .credit strong {
+      color: #fff;
+    }
+
+    body.dark .brand-text p {
+      opacity: 0.5;
+    }
+
+    body.dark .hero p {
+      opacity: 0.6;
+    }
+
+    body.dark .stat span,
+    body.dark .person-card .role,
+    body.dark .person-card .next-badge span,
+    body.dark .age-card .info p,
+    body.dark .section-header p,
+    body.dark .legend {
+      opacity: 0.4;
+    }
+
+    body.dark .day .day-num {
+      opacity: 0.4;
+    }
+
+    body.dark .week div {
+      opacity: 0.3;
+    }
+
+    body.dark .upcoming-item .info small {
+      opacity: 0.4;
+    }
+
+    body.dark .upcoming-item .count {
+      opacity: 0.3;
+    }
+
+    body.dark .toast {
+      background: rgba(30, 22, 38, 0.98);
+      color: #fff;
+      border-color: rgba(255, 255, 255, 0.12);
+      box-shadow:
+        0 12px 40px rgba(0, 0, 0, 0.6),
+        0 2px 8px rgba(0, 0, 0, 0.4);
+    }
+
+    body.dark .theme-toggle {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.08);
+    }
+
+    body.dark .live-badge {
+      border-color: rgba(255, 255, 255, 0.06);
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    body.dark .brand-icon {
+      background: linear-gradient(135deg, #d4a0b8, #b8849c);
+    }
+
+    body.dark .brand-icon:hover {
+      box-shadow: 0 10px 38px rgba(212, 160, 184, 0.35);
+    }
+
+    body.dark .topbar {
+      border-bottom-color: rgba(255, 255, 255, 0.06);
+    }
+
+    body.dark .avatar-ring-inner {
+      background: #0d0a10;
+      color: #fff;
+    }
+
+    /* =========================================================
+       TABLET
+    ========================================================= */
+
+    @media (max-width: 1024px) {
+      .people-grid,
+      .age-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .calendar-wrap {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* =========================================================
+       IPHONE / MOBILE
+    ========================================================= */
+
+    @media (max-width: 640px) {
+
+      body {
+        overflow-x: hidden;
+      }
+
+      .app {
+        width: 100%;
+        max-width: 100%;
+        padding:
+          12px
+          12px
+          calc(90px + env(safe-area-inset-bottom));
+      }
+
+      .topbar {
+        padding: 5px 0 12px;
+        margin-bottom: 14px;
+      }
+
+      .brand {
+        gap: 11px;
+      }
+
+      .brand-icon {
+        width: 44px;
+        height: 44px;
+        flex-basis: 44px;
+        border-radius: 13px;
+        font-size: 22px;
+      }
+
+      .brand-text h1 {
+        font-size: 1rem;
+      }
+
+      .brand-text p {
+        display: none;
+      }
+
+      /* HERO */
+
+      .hero {
+        padding: 17px 15px;
+        border-radius: 20px;
+        margin-bottom: 14px;
+      }
+
+      .live-badge {
+        max-width: 100%;
+        padding: 6px 10px;
+        gap: 7px;
+        font-size: 0.64rem;
+      }
+
+      .stats {
+        width: 100%;
+        max-width: none;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 7px;
+        margin-top: 13px;
+      }
+
+      .stat {
+        padding: 10px 7px;
+        border-radius: 12px;
+        text-align: center;
+      }
+
+      .stat strong {
+        font-size: 1.1rem;
+      }
+
+      .stat-upcoming strong {
+        font-size: 0.92rem;
+      }
+
+      .stat span {
+        font-size: 0.48rem;
+        letter-spacing: 0.3px;
+      }
+
+      /* SECTIONS */
+
+      .section {
+        margin-top: 12px;
+        padding: 15px;
+        border-radius: 20px;
+      }
+
+      .section-header {
+        margin-bottom: 13px;
+      }
+
+      .section-header h3 {
+        font-size: 0.94rem;
+      }
+
+      .section-header p {
+        font-size: 0.64rem;
+      }
+
+      /* PEOPLE – 2 COLUMNS */
+
+      .people-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 9px;
+      }
+
+      .person-card {
+        padding: 14px 9px 12px;
+        border-radius: 17px;
+      }
+
+      .avatar-ring {
+        width: 56px;
+        height: 56px;
+        padding: 2px;
+        margin-bottom: 7px;
+      }
+
+      .avatar-ring-inner {
+        font-size: 1.3rem;
+      }
+
+      .person-card h4 {
+        font-size: 0.82rem;
+      }
+
+      .person-card .role {
+        font-size: 0.58rem;
+        margin-bottom: 7px;
+      }
+
+      .person-card .dates {
+        gap: 4px;
+      }
+
+      .person-card .dates div {
+        padding: 5px 2px;
+        border-radius: 7px;
+      }
+
+      .person-card .dates div small {
+        font-size: 0.38rem;
+      }
+
+      .person-card .dates div strong {
+        font-size: 0.54rem;
+      }
+
+      .person-card .next-badge {
+        margin-top: 8px;
+        padding-top: 8px;
+        font-size: 0.51rem;
+        gap: 3px;
+      }
+
+      .person-card .next-badge .days {
+        font-size: 0.6rem;
+      }
+
+      /* CALENDAR */
+
+      .calendar-wrap {
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+
+      .calendar-panel,
+      .upcoming-panel {
+        padding: 12px 10px;
+        border-radius: 17px;
+      }
+
+      .calendar-nav {
+        margin-bottom: 10px;
+      }
+
+      .calendar-nav .month {
+        font-size: 0.88rem;
+      }
+
+      .calendar-nav .navs button {
+        width: 32px;
+        height: 32px;
+        border-radius: 9px;
+      }
+
+      .week,
+      .days-grid {
+        gap: 2px;
+      }
+
+      .week div {
+        font-size: 0.52rem;
+        padding: 3px 0;
+      }
+
+      .day {
+        min-height: 52px;
+        border-radius: 9px;
+        padding: 3px 2px;
+      }
+
+      .day .day-num {
+        font-size: 0.6rem;
+      }
+
+      .day .event-dot {
+        font-size: 0.34rem;
+        padding: 1px 2px;
+        margin-top: 1px;
+      }
+
+      .legend {
+        gap: 7px;
+        font-size: 0.48rem;
+        margin-top: 8px;
+      }
+
+      .legend i {
+        width: 6px;
+        height: 6px;
+      }
+
+      /* UPCOMING */
+
+      .upcoming-title {
+        font-size: 0.8rem;
+      }
+
+      .upcoming-subtitle {
+        font-size: 0.6rem;
+        margin-bottom: 9px;
+      }
+
+      .upcoming-list {
+        gap: 5px;
+      }
+
+      .upcoming-item {
+        gap: 7px;
+        padding: 7px 8px;
+        border-radius: 12px;
+      }
+
+      .upcoming-item .icon {
+        width: 29px;
+        height: 29px;
+        flex-basis: 29px;
+        border-radius: 8px;
+        font-size: 12px;
+      }
+
+      .upcoming-item .info b {
+        font-size: 0.63rem;
+      }
+
+      .upcoming-item .info small {
+        font-size: 0.51rem;
+      }
+
+      .upcoming-item .count {
+        font-size: 0.54rem;
+      }
+
+      /* AGE – 2 COLUMNS */
+
+      .age-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+      }
+
+      .age-card {
+        padding: 12px 11px;
+        border-radius: 14px;
+      }
+
+      .age-card .info h4 {
+        font-size: 0.72rem;
+      }
+
+      .age-card .info p {
+        font-size: 0.5rem;
+      }
+
+      .age-card .number {
+        font-size: 1.5rem;
+      }
+
+      /* FOOTER */
+
+      .footer {
+        padding: 22px 0 8px;
+      }
+
+      /* THEME BUTTON */
+
+      .theme-toggle {
+        width: 48px;
+        height: 48px;
+        right: 15px;
+        bottom: calc(18px + env(safe-area-inset-bottom));
+        border-radius: 15px;
+      }
+
+      /* TOAST – OPRAVA: ešte vyššie a väčšie na iPhone */
+      .toast {
+        bottom: calc(130px + env(safe-area-inset-bottom));
+        padding: 14px 20px;
+        font-size: 0.82rem;
+        max-width: calc(100vw - 28px);
+      }
+    }
+
+    /* =========================================================
+       VERY SMALL PHONES
+    ========================================================= */
+
+    @media (max-width: 380px) {
+
+      .app {
+        padding-left: 9px;
+        padding-right: 9px;
+      }
+
+      .section {
+        padding: 12px;
+      }
+
+      .people-grid {
+        gap: 7px;
+      }
+
+      .person-card {
+        padding-left: 7px;
+        padding-right: 7px;
+      }
+
+      .stats {
+        gap: 5px;
+      }
+
+      .stat {
+        padding-left: 4px;
+        padding-right: 4px;
+      }
+
+      .stat strong {
+        font-size: 1rem;
+      }
+
+      .stat span {
+        font-size: 0.43rem;
+      }
+
+      .day {
+        min-height: 48px;
+      }
+    }
+
+    /* =========================================================
+       REDUCE MOTION
+    ========================================================= */
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Animated background -->
+  <div class="bg-particles" id="particles"></div>
+
+  <main class="app">
+
+    <!-- TOPBAR -->
+    <div class="topbar">
+      <div class="brand">
+
+        <!-- Klikateľná ikona torty na aktualizáciu -->
+        <div
+          class="brand-icon"
+          id="brandIcon"
+          role="button"
+          tabindex="0"
+          aria-label="Skontrolovať aktualizácie"
+          title="Skontrolovať aktualizácie"
+        >🎂</div>
+
+        <div class="brand-text">
+          <h1></h1>
+          <p>Rodinný kalendár</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- HERO -->
+    <section class="hero">
+
+      <div class="hero-content">
+
+        <div class="live-badge">
+          <span class="live-dot"></span>
+          <span id="liveDate">Načítavam…</span>
+          <span>•</span>
+          <span id="liveTime">--:--:--</span>
+        </div>
+
+        <div class="stats">
+
+          <div class="stat">
+            <strong id="peopleCount">4</strong>
+            <span>Osoby</span>
+          </div>
+
+          <div class="stat stat-upcoming">
+            <strong id="upcomingCount">—</strong>
+            <span id="upcomingLabel">Najbližšie</span>
+          </div>
+
+          <div class="stat">
+            <strong id="daysThisYear">—</strong>
+            <span>Dní do konca roka</span>
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
+    <!-- RODINA -->
+    <section class="section">
+
+      <div class="section-header">
+        <div>
+          <h3>👨‍👩‍👧‍👦 Moja rodina</h3>
+          <p>Každý člen so svojimi dátumami</p>
+        </div>
+      </div>
+
+      <div class="people-grid" id="peopleGrid"></div>
+
+    </section>
+
+    <!-- KALENDÁR -->
+    <section class="section">
+
+      <div class="section-header">
+        <div>
+          <h3>📅 Kalendár</h3>
+          <p>Klikni na deň pre detail</p>
+        </div>
+      </div>
+
+      <div class="calendar-wrap">
+
+        <div class="calendar-panel">
+
+          <div class="calendar-nav">
+
+            <div class="month" id="monthTitle"></div>
+
+            <div class="navs">
+              <button id="prev" aria-label="Predchádzajúci mesiac">‹</button>
+              <button id="next" aria-label="Nasledujúci mesiac">›</button>
+            </div>
+
+          </div>
+
+          <div class="week" id="week"></div>
+
+          <div class="days-grid" id="daysGrid"></div>
+
+          <div class="legend">
+            <span>
+              <i class="l-bday"></i>
+              narodeniny
+            </span>
+
+            <span>
+              <i class="l-name"></i>
+              meniny
+            </span>
+
+            <span>
+              <i class="l-today"></i>
+              dnes
+            </span>
+          </div>
+
+        </div>
+
+        <div class="upcoming-panel">
+
+          <h4 class="upcoming-title">📌 Najbližšie</h4>
+
+          <p class="upcoming-subtitle">Čo sa blíži</p>
+
+          <div class="upcoming-list" id="upcomingList"></div>
+
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- VEK -->
+    <section class="section">
+
+      <div class="section-header">
+        <div>
+          <h3>🎂 Vek pri narodeninách</h3>
+          <p>Automatický prepočet každý rok</p>
+        </div>
+      </div>
+
+      <div class="age-grid" id="ageGrid"></div>
+
+    </section>
+
+    <!-- FOOTER -->
+    <div class="footer">
+      <p class="credit">
+        vytvoril <strong>Mgr. Peter Galko</strong> 💕
+      </p>
+    </div>
+
+  </main>
+
+  <!-- THEME BUTTON -->
+  <button
+    class="theme-toggle"
+    id="themeBtn"
+    aria-label="Prepnúť tému"
+    title="Prepnúť svetlý / tmavý režim"
+  >☀</button>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+
+  <script>
+    (() => {
+
+      'use strict';
+
+      /* =========================================================
+         PARTICLES
+      ========================================================= */
+
+      (function initParticles() {
+
+        const container = document.getElementById('particles');
+
+        for (let i = 0; i < 35; i++) {
+
+          const p = document.createElement('div');
+
+          p.className = 'particle';
+
+          p.style.left = Math.random() * 100 + '%';
+
+          p.style.width =
+            (Math.random() * 4 + 2) + 'px';
+
+          p.style.height = p.style.width;
+
+          p.style.animationDuration =
+            (Math.random() * 25 + 15) + 's';
+
+          p.style.animationDelay =
+            (Math.random() * 20) + 's';
+
+          p.style.opacity =
+            Math.random() * 0.4 + 0.05;
+
+          container.appendChild(p);
+        }
+
+      })();
+
+
+      /* =========================================================
+         MENINY
+      ========================================================= */
+
+      const NAME_DAYS = {
+
+        '1-1': 'Nový rok',
+        '1-2': 'Alexandra',
+        '1-3': 'Daniela',
+        '1-4': 'Drahoslav',
+        '1-5': 'Andrea',
+        '1-6': 'Antónia',
+        '1-7': 'Bohuslav(a)',
+        '1-8': 'Severín',
+        '1-9': 'Alexej',
+        '1-10': 'Dáša',
+        '1-11': 'Malvína',
+        '1-12': 'Ernest',
+        '1-13': 'Rastislav',
+        '1-14': 'Radovan',
+        '1-15': 'Dobroslav',
+        '1-16': 'Kristína',
+        '1-17': 'Nataša',
+        '1-18': 'Bohdana',
+        '1-19': 'Drahomíra',
+        '1-20': 'Dalibor',
+        '1-21': 'Vincent',
+        '1-22': 'Zora',
+        '1-23': 'Miloš',
+        '1-24': 'Timotej',
+        '1-25': 'Gejza',
+        '1-26': 'Tamara',
+        '1-27': 'Bohuš',
+        '1-28': 'Alfonz',
+        '1-29': 'Gašpar',
+        '1-30': 'Ema',
+        '1-31': 'Emil',
+
+        '2-1': 'Tatiana',
+        '2-2': 'Erik(a)',
+        '2-3': 'Blažej',
+        '2-4': 'Veronika',
+        '2-5': 'Agáta',
+        '2-6': 'Dorota',
+        '2-7': 'Vanda',
+        '2-8': 'Zoja',
+        '2-9': 'Zdenko',
+        '2-10': 'Gabriela',
+        '2-11': 'Dezider',
+        '2-12': 'Perla',
+        '2-13': 'Arpád',
+        '2-14': 'Valentín',
+        '2-15': 'Pravoslav',
+        '2-16': 'Ida',
+        '2-17': 'Miloslava',
+        '2-18': 'Jaromír',
+        '2-19': 'Vlasta',
+        '2-20': 'Lívia',
+        '2-21': 'Eleonóra',
+        '2-22': 'Etela',
+        '2-23': 'Roman(a)',
+        '2-24': 'Metej',
+        '2-25': 'Frederik(a)',
+        '2-26': 'Viktor',
+        '2-27': 'Alexander',
+        '2-28': 'Zlatica',
+        '2-29': 'Radomír',
+
+        '3-1': 'Albín',
+        '3-2': 'Anežka',
+        '3-3': 'Bohumil(a)',
+        '3-4': 'Kazimír',
+        '3-5': 'Fridrich',
+        '3-6': 'Radoslav',
+        '3-7': 'Tomáš',
+        '3-8': 'Alan(a)',
+        '3-9': 'Františka',
+        '3-10': 'Branislav, Bruno',
+        '3-11': 'Angela, Angelika',
+        '3-12': 'Gregor',
+        '3-13': 'Vlastimil',
+        '3-14': 'Matilda',
+        '3-15': 'Svetlana',
+        '3-16': 'Boleslav',
+        '3-17': 'Lubica',
+        '3-18': 'Eduard',
+        '3-19': 'Jozef',
+        '3-20': 'Víťazoslav',
+        '3-21': 'Blahoslav',
+        '3-22': 'Benadik',
+        '3-23': 'Adrián',
+        '3-24': 'Gabriel',
+        '3-25': 'Marián',
+        '3-26': 'Emanuel',
+        '3-27': 'Alena',
+        '3-28': 'Sona',
+        '3-29': 'Miroslav',
+        '3-30': 'Vieroslava',
+        '3-31': 'Benjamín',
+
+        '4-1': 'Hugo',
+        '4-2': 'Zita',
+        '4-3': 'Richard',
+        '4-4': 'Izidor',
+        '4-5': 'Miroslava',
+        '4-6': 'Irena',
+        '4-7': 'Zoltán',
+        '4-8': 'Albert',
+        '4-9': 'Milena',
+        '4-10': 'Igor',
+        '4-11': 'Július',
+        '4-12': 'Estera',
+        '4-13': 'Aleš',
+        '4-14': 'Justína',
+        '4-15': 'Fedor',
+        '4-16': 'Dana, Danica',
+        '4-17': 'Rudolf',
+        '4-18': 'Valér',
+        '4-19': 'Jela',
+        '4-20': 'Marcel',
+        '4-21': 'Ervín',
+        '4-22': 'Slavomír',
+        '4-23': 'Vojtech',
+        '4-24': 'Juraj',
+        '4-25': 'Marek',
+        '4-26': 'Jaroslava',
+        '4-27': 'Jaroslav',
+        '4-28': 'Jarmila',
+        '4-29': 'Lea',
+        '4-30': 'Anastázia',
+
+        '5-1': 'Sviatok práce',
+        '5-2': 'Žigmund',
+        '5-3': 'Galina',
+        '5-4': 'Florián',
+        '5-5': 'Lesana, Lesia',
+        '5-6': 'Hermína',
+        '5-7': 'Monika',
+        '5-8': 'Ingrida',
+        '5-9': 'Roland',
+        '5-10': 'Viktória',
+        '5-11': 'Blažena',
+        '5-12': 'Pankrác',
+        '5-13': 'Servác',
+        '5-14': 'Bonifác',
+        '5-15': 'Žofia',
+        '5-16': 'Svetozár',
+        '5-17': 'Gizela',
+        '5-18': 'Viola',
+        '5-19': 'Gertrúda',
+        '5-20': 'Bernard',
+        '5-21': 'Zina',
+        '5-22': 'Júlia, Juliana',
+        '5-23': 'Želmíra',
+        '5-24': 'Ela',
+        '5-25': 'Urban',
+        '5-26': 'Dušan',
+        '5-27': 'Iveta',
+        '5-28': 'Viliam',
+        '5-29': 'Vilma',
+        '5-30': 'Ferdinand',
+        '5-31': 'Petronela, Petrana',
+
+        '6-1': 'Žaneta',
+        '6-2': 'Xénia',
+        '6-3': 'Karolína',
+        '6-4': 'Lenka',
+        '6-5': 'Laura',
+        '6-6': 'Norbert',
+        '6-7': 'Róbert',
+        '6-8': 'Medard',
+        '6-9': 'Stanislava',
+        '6-10': 'Margaréta',
+        '6-11': 'Dobroslava',
+        '6-12': 'Zlatko',
+        '6-13': 'Anton',
+        '6-14': 'Vasil',
+        '6-15': 'Vít',
+        '6-16': 'Blanka',
+        '6-17': 'Adolf',
+        '6-18': 'Vratislav(a)',
+        '6-19': 'Alfréd',
+        '6-20': 'Valéria',
+        '6-21': 'Alojz',
+        '6-22': 'Paulína',
+        '6-23': 'Sidónia',
+        '6-24': 'Ján',
+        '6-25': 'Tadeáš',
+        '6-26': 'Adriána',
+        '6-27': 'Ladislav(a)',
+        '6-28': 'Beáta',
+        '6-29': 'Peter a Pavol, Petra',
+        '6-30': 'Melánia',
+
+        '7-1': 'Diana',
+        '7-2': 'Berta',
+        '7-3': 'Miloslav',
+        '7-4': 'Prokop',
+        '7-5': 'Sviatok sv. Cyrila a Metoda',
+        '7-6': 'Patrícia, Patrik',
+        '7-7': 'Oliver',
+        '7-8': 'Ivan',
+        '7-9': 'Lujza',
+        '7-10': 'Amália',
+        '7-11': 'Milota',
+        '7-12': 'Nina',
+        '7-13': 'Margita',
+        '7-14': 'Kamil',
+        '7-15': 'Henrich',
+        '7-16': 'Drahomír',
+        '7-17': 'Bohuslav',
+        '7-18': 'Kamila',
+        '7-19': 'Dušana',
+        '7-20': 'Iľja, Eliáš',
+        '7-21': 'Daniel',
+        '7-22': 'Magdaléna',
+        '7-23': 'Olga',
+        '7-24': 'Vladimír',
+        '7-25': 'Jakub',
+        '7-26': 'Anna, Hana',
+        '7-27': 'Božena',
+        '7-28': 'Krištof',
+        '7-29': 'Marta',
+        '7-30': 'Libuša',
+        '7-31': 'Ignác',
+
+        '8-1': 'Božidara',
+        '8-2': 'Gustáv',
+        '8-3': 'Jerguš',
+        '8-4': 'Dominik(a)',
+        '8-5': 'Hortenzia',
+        '8-6': 'Jozefína',
+        '8-7': 'Štefánia',
+        '8-8': 'Oskár',
+        '8-9': 'Ľubomíra',
+        '8-10': 'Vavrinec',
+        '8-11': 'Zuzana',
+        '8-12': 'Darina',
+        '8-13': 'Ľubomír',
+        '8-14': 'Mojmír',
+        '8-15': 'Marcela',
+        '8-16': 'Leonard',
+        '8-17': 'Milica',
+        '8-18': 'Elena, Helena',
+        '8-19': 'Lýdia',
+        '8-20': 'Anabela',
+        '8-21': 'Jana',
+        '8-22': 'Tichomír',
+        '8-23': 'Filip',
+        '8-24': 'Bartolomej',
+        '8-25': 'Ľudovít',
+        '8-26': 'Samuel',
+        '8-27': 'Silvia',
+        '8-28': 'Augustín',
+        '8-29': 'Nikola',
+        '8-30': 'Ružena',
+        '8-31': 'Nora',
+
+        '9-1': 'Drahoslava',
+        '9-2': 'Linda',
+        '9-3': 'Belo',
+        '9-4': 'Rozália',
+        '9-5': 'Regína',
+        '9-6': 'Alica',
+        '9-7': 'Marianna',
+        '9-8': 'Miriama',
+        '9-9': 'Martina',
+        '9-10': 'Oleg',
+        '9-11': 'Bystrík',
+        '9-12': 'Mária',
+        '9-13': 'Ctibor',
+        '9-14': 'Lubomil, Ludomil',
+        '9-15': 'Jolana',
+        '9-16': 'Ludmila',
+        '9-17': 'Olympia',
+        '9-18': 'Eugénia',
+        '9-19': 'Konštantín',
+        '9-20': 'Luboslav(a)',
+        '9-21': 'Matúš',
+        '9-22': 'Móric',
+        '9-23': 'Zdenka',
+        '9-24': 'Ľuboš, Ľubor',
+        '9-25': 'Vladislav',
+        '9-26': 'Edita',
+        '9-27': 'Cyprián',
+        '9-28': 'Václav',
+        '9-29': 'Michal, Michaela',
+        '9-30': 'Jarolím',
+
+        '10-1': 'Arnold',
+        '10-2': 'Levoslav',
+        '10-3': 'Stela',
+        '10-4': 'František',
+        '10-5': 'Viera',
+        '10-6': 'Natália',
+        '10-7': 'Eliška',
+        '10-8': 'Brigita',
+        '10-9': 'Dionýz',
+        '10-10': 'Slavomíra',
+        '10-11': 'Valentína',
+        '10-12': 'Maximilián',
+        '10-13': 'Koloman',
+        '10-14': 'Boris',
+        '10-15': 'Terézia',
+        '10-16': 'Vladimíra',
+        '10-17': 'Hedviga',
+        '10-18': 'Lukáš',
+        '10-19': 'Kristián',
+        '10-20': 'Vendelín',
+        '10-21': 'Uršuľa',
+        '10-22': 'Sergej',
+        '10-23': 'Alojzia',
+        '10-24': 'Kvetoslava',
+        '10-25': 'Aurel',
+        '10-26': 'Demeter',
+        '10-27': 'Sabína',
+        '10-28': 'Dobromila, Kevin',
+        '10-29': 'Klára',
+        '10-30': 'Šimon(a)',
+        '10-31': 'Aurélia',
+
+        '11-1': 'Denis(a)',
+        '11-2': 'Pamiatka zosnulých',
+        '11-3': 'Hubert',
+        '11-4': 'Karol',
+        '11-5': 'Imrich',
+        '11-6': 'Renáta',
+        '11-7': 'René',
+        '11-8': 'Bohumír',
+        '11-9': 'Teodor',
+        '11-10': 'Tibor',
+        '11-11': 'Martin, Maroš',
+        '11-12': 'Svätopluk',
+        '11-13': 'Stanislav',
+        '11-14': 'Irma',
+        '11-15': 'Leopold',
+        '11-16': 'Agnesa',
+        '11-17': 'Klaudia',
+        '11-18': 'Eugen',
+        '11-19': 'Alžbeta',
+        '11-20': 'Félix',
+        '11-21': 'Elvíra',
+        '11-22': 'Cecília',
+        '11-23': 'Klement',
+        '11-24': 'Emília',
+        '11-25': 'Katarína',
+        '11-26': 'Kornel',
+        '11-27': 'Milan',
+        '11-28': 'Henrieta',
+        '11-29': 'Vratko',
+        '11-30': 'Ondrej, Andrej',
+
+        '12-1': 'Edmund',
+        '12-2': 'Bibiána',
+        '12-3': 'Oldrich',
+        '12-4': 'Barbora',
+        '12-5': 'Oto',
+        '12-6': 'Mikuláš',
+        '12-7': 'Ambróz',
+        '12-8': 'Marína',
+        '12-9': 'Izabela',
+        '12-10': 'Radúz',
+        '12-11': 'Hilda',
+        '12-12': 'Otília',
+        '12-13': 'Lucia',
+        '12-14': 'Branislava, Bronislava',
+        '12-15': 'Ivica',
+        '12-16': 'Albína',
+        '12-17': 'Kornélia',
+        '12-18': 'Sláva, Slávka',
+        '12-19': 'Judita',
+        '12-20': 'Dagmara',
+        '12-21': 'Bohdan',
+        '12-22': 'Adela',
+        '12-23': 'Nadežda',
+        '12-24': 'Adam a Eva',
+        '12-25': '1. Sviatok vianočný',
+        '12-26': 'Štefan',
+        '12-27': 'Filoména',
+        '12-28': 'Ivana, Ivona',
+        '12-29': 'Milada',
+        '12-30': 'Dávid',
+        '12-31': 'Silvester'
+      };
+
+
+      /* =========================================================
+         ĽUDIA
+      ========================================================= */
+
+      const PEOPLE = [
+        {
+          name: 'Anna',
+          role: 'Krstná',
+          birthday: { day: 6, month: 7, year: 1958 },
+          nameday:  { day: 26, month: 7 }
+        },
+        {
+          name: 'Jarmila',
+          role: 'Teta',
+          birthday: { day: 13, month: 2, year: 1969 },
+          nameday:  { day: 28, month: 4 }
+        },
+        {
+          name: 'Anežka',
+          role: 'Mama',
+          birthday: { day: 26, month: 5, year: 1973 },
+          nameday:  { day: 2, month: 3 }
+        },
+        {
+          name: 'Erika',
+          role: 'Dcéra',
+          birthday: { day: 16, month: 7, year: 2001 },
+          nameday:  { day: 2, month: 2 }
+        }
+      ];
+
+
+      const MONTHS = [
+        'január', 'február', 'marec', 'apríl', 'máj', 'jún',
+        'júl', 'august', 'september', 'október', 'november', 'december'
+      ];
+
+      const WEEK = ['Po', 'Ut', 'St', 'Št', 'Pi', 'So', 'Ne'];
+
+
+      /* =========================================================
+         DATE HELPERS
+      ========================================================= */
+
+      const todayStart = () => {
+        const d = new Date();
+        return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+      };
+
+
+      const nextOccurrence = (day, month, from = todayStart()) => {
+        let y = from.getFullYear();
+        let target = new Date(y, month - 1, day);
+
+        if (target < from) {
+          target = new Date(y + 1, month - 1, day);
+        }
+
+        return target;
+      };
+
+
+      const diffDays = (a, b) =>
+        Math.round((b - a) / 86400000);
+
+
+      const daysLabel = (n) => {
+        if (n === 0) return 'Dnes';
+        if (n === 1) return 'Zajtra';
+        if (n >= 2 && n <= 4) return `o ${n} dni`;
+        return `o ${n} dní`;
+      };
+
+
+      const dateText = (d) =>
+        `${d.getDate()}. ${MONTHS[d.getMonth()]}`;
+
+
+      const fullDateText = (d) =>
+        `${d.getDate()}. ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+
+
+      /* =========================================================
+         EVENTS
+      ========================================================= */
+
+      const getAllEvents = () => {
+
+        const events = [];
+
+        PEOPLE.forEach(p => {
+
+          events.push({
+            type: 'birthday',
+            person: p,
+            day: p.birthday.day,
+            month: p.birthday.month,
+            label: `🎂 ${p.name}`
+          });
+
+          events.push({
+            type: 'nameday',
+            person: p,
+            day: p.nameday.day,
+            month: p.nameday.month,
+            label: `★ ${p.name}`
+          });
+
+        });
+
+
+        Object.entries(NAME_DAYS).forEach(([key, name]) => {
+
+          const [m, d] = key.split('-').map(Number);
+
+          events.push({
+            type: 'nameday_general',
+            day: d,
+            month: m,
+            label: `★ ${name}`
+          });
+
+        });
+
+
+        return events;
+      };
+
+
+      /* =========================================================
+         TOAST
+         OPRAVA: dlhšie trvanie (4,5 s) namiesto 2,8 s
+      ========================================================= */
+
+      const showToast = (msg) => {
+
+        const el = document.getElementById('toast');
+
+        el.textContent = msg;
+
+        el.classList.add('show');
+
+        clearTimeout(window.toastTimer);
+
+        window.toastTimer =
+          setTimeout(() => el.classList.remove('show'), 4500);
+      };
+
+
+      /* =========================================================
+         RENDER PEOPLE
+      ========================================================= */
+
+      const renderPeople = () => {
+
+        const root = document.getElementById('peopleGrid');
+
+        root.innerHTML = PEOPLE.map(p => {
+
+          const bday = nextOccurrence(p.birthday.day, p.birthday.month);
+          const nd   = nextOccurrence(p.nameday.day, p.nameday.month);
+
+          const bdiff = diffDays(todayStart(), bday);
+          const ndiff = diffDays(todayStart(), nd);
+
+          const nearest =
+            bdiff <= ndiff
+              ? { type: 'birthday', days: bdiff, date: bday }
+              : { type: 'nameday',   days: ndiff, date: nd };
+
+
+          return `
+            <div class="person-card" data-person="${p.name}">
+
+              <div class="avatar-ring">
+                <div class="avatar-ring-inner">
+                  ${p.name[0].toUpperCase()}
+                </div>
+              </div>
+
+              <h4>${p.name}</h4>
+
+              <div class="role">${p.role}</div>
+
+              <div class="dates">
+
+                <div>
+                  <small>🎂 narodeniny</small>
+                  <strong>
+                    ${p.birthday.day}.${p.birthday.month}.${p.birthday.year}
+                  </strong>
+                </div>
+
+                <div>
+                  <small>★ meniny</small>
+                  <strong>
+                    ${p.nameday.day}.${p.nameday.month}.
+                  </strong>
+                </div>
+
+              </div>
+
+              <div class="next-badge">
+
+                <span>
+                  ${
+                    nearest.type === 'birthday'
+                      ? '🎂 Najbližšie narodeniny'
+                      : '★ Najbližšie meniny'
+                  }
+                  <br>
+                  ${dateText(nearest.date)}
+                </span>
+
+                <span class="days ${nearest.days === 0 ? 'today' : ''}">
+                  ${daysLabel(nearest.days)}
+                </span>
+
+              </div>
+
+            </div>
+          `;
+
+        }).join('');
+
+
+        root.querySelectorAll('.person-card').forEach(el => {
+          el.addEventListener('click', () =>
+            showToast(`${el.dataset.person} • detaily osoby`)
+          );
+        });
+
+      };
+
+
+      /* =========================================================
+         AGES
+      ========================================================= */
+
+      const renderAges = () => {
+
+        document.getElementById('ageGrid').innerHTML =
+          PEOPLE.map(p => {
+
+            const target = nextOccurrence(p.birthday.day, p.birthday.month);
+            const age = target.getFullYear() - p.birthday.year;
+
+            return `
+              <div class="age-card">
+
+                <div class="info">
+                  <h4>${p.name}</h4>
+                  <p>
+                    ${p.role} •
+                    ${target.getDate()}.
+                    ${MONTHS[target.getMonth()]}
+                    ${target.getFullYear()}
+                  </p>
+                </div>
+
+                <div class="number">${age}</div>
+
+              </div>
+            `;
+
+          }).join('');
+      };
+
+
+      /* =========================================================
+         CALENDAR
+      ========================================================= */
+
+      const renderCalendar = () => {
+
+        const view = window.calendarView;
+
+        document.getElementById('monthTitle').textContent =
+          `${MONTHS[view.getMonth()]} ${view.getFullYear()}`;
+
+        document.getElementById('week').innerHTML =
+          WEEK.map(x => `<div>${x}</div>`).join('');
+
+
+        const grid = document.getElementById('daysGrid');
+        grid.innerHTML = '';
+
+
+        const first = new Date(view.getFullYear(), view.getMonth(), 1);
+        const offset = (first.getDay() + 6) % 7;
+
+        const daysInMonth =
+          new Date(view.getFullYear(), view.getMonth() + 1, 0).getDate();
+
+        const prevDays =
+          new Date(view.getFullYear(), view.getMonth(), 0).getDate();
+
+        const total = Math.ceil((offset + daysInMonth) / 7) * 7;
+
+        const today = todayStart();
+        const allEvents = getAllEvents();
+
+
+        for (let i = 0; i < total; i++) {
+
+          let num = i - offset + 1;
+          let d;
+          let muted = false;
+
+          if (num < 1) {
+            d = new Date(view.getFullYear(), view.getMonth() - 1, prevDays + num);
+            muted = true;
+          } else if (num > daysInMonth) {
+            d = new Date(view.getFullYear(), view.getMonth() + 1, num - daysInMonth);
+            muted = true;
+          } else {
+            d = new Date(view.getFullYear(), view.getMonth(), num);
+          }
+
+
+          const dayEvents = allEvents.filter(
+            e => e.month === d.getMonth() + 1 && e.day === d.getDate()
+          );
+
+          const bdays = dayEvents.filter(e => e.type === 'birthday');
+          const ndays = dayEvents.filter(
+            e => e.type === 'nameday' || e.type === 'nameday_general'
+          );
+
+
+          const cell = document.createElement('div');
+
+          cell.className =
+            `day ${muted ? 'muted' : ''} ${d.getTime() === today.getTime() ? 'today' : ''}`;
+
+
+          let html = `<span class="day-num">${d.getDate()}</span>`;
+
+          bdays.forEach(e => {
+            html += `<div class="event-dot bday">🎂 ${e.person.name}</div>`;
+          });
+
+          ndays.forEach(e => {
+            const label = e.person
+              ? `★ ${e.person.name}`
+              : `★ ${e.label.replace('★ ', '')}`;
+            html += `<div class="event-dot name">${label}</div>`;
+          });
+
+
+          cell.innerHTML = html;
+
+
+          const eventNames = dayEvents.map(e => {
+            if (e.type === 'birthday') return `🎂 Narodeniny: ${e.person.name}`;
+            if (e.type === 'nameday')   return `★ Meniny: ${e.person.name}`;
+            return `★ Meniny: ${e.label.replace('★ ', '')}`;
+          }).join(' • ');
+
+
+          cell.title = dayEvents.length
+            ? `${fullDateText(d)} • ${eventNames}`
+            : fullDateText(d);
+
+
+          cell.addEventListener('click', () => {
+            if (dayEvents.length) {
+              showToast(`${fullDateText(d)} • ${eventNames}`);
+            } else {
+              showToast(fullDateText(d));
+            }
+          });
+
+
+          grid.appendChild(cell);
+        }
+
+      };
+
+
+      /* =========================================================
+         UPCOMING
+      ========================================================= */
+
+      const renderUpcoming = () => {
+
+        const today = todayStart();
+        const allEvents = getAllEvents();
+
+
+        const upcoming = allEvents
+          .map(e => {
+            const date = nextOccurrence(e.day, e.month, today);
+            return {
+              ...e,
+              date,
+              days: diffDays(today, date)
+            };
+          })
+          .filter(e => e.days >= 0)
+          .sort((a, b) => a.date - b.date)
+          .slice(0, 10);
+
+
+        document.getElementById('upcomingList').innerHTML =
+          upcoming.map(e => {
+
+            const label = e.person
+              ? e.person.name
+              : e.label.replace('★ ', '');
+
+            const typeLabel =
+              e.type === 'birthday' ? 'narodeniny' : 'meniny';
+
+            return `
+              <div class="upcoming-item">
+
+                <div class="icon ${e.type === 'birthday' ? 'bday' : 'name'}">
+                  ${e.type === 'birthday' ? '🎂' : '★'}
+                </div>
+
+                <div class="info">
+                  <b>${label} • ${typeLabel}</b>
+                  <small>
+                    ${dateText(e.date)}
+                    ${e.type === 'birthday' && e.person ? ' • ' + e.person.role : ''}
+                  </small>
+                </div>
+
+                <div class="count ${e.days === 0 ? 'today' : ''}">
+                  ${daysLabel(e.days)}
+                </div>
+
+              </div>
+            `;
+
+          }).join('') ||
+
+          `
+            <div style="color:#000;opacity:.2;font-size:.75rem;padding:10px 0;">
+              Žiadne blížiace sa udalosti
+            </div>
+          `;
+
+
+        const first = upcoming[0];
+
+        const upcomingCount = document.getElementById('upcomingCount');
+        const upcomingLabel = document.getElementById('upcomingLabel');
+
+        if (first) {
+
+          let firstName = '';
+
+          if (first.person) {
+            firstName = first.person.name.split(',')[0].trim();
+          } else {
+            firstName = first.label.replace('★ ', '').split(',')[0].trim();
+          }
+
+          const firstType =
+            first.type === 'birthday' ? 'narodeniny' : 'meniny';
+
+          upcomingCount.textContent = firstName;
+
+          upcomingLabel.textContent =
+            first.days === 0
+              ? `${firstType} • DNES`
+              : `${firstType} • ${daysLabel(first.days)}`;
+
+        } else {
+          upcomingCount.textContent = '—';
+          upcomingLabel.textContent = 'Žiadna udalosť';
+        }
+
+      };
+
+
+      /* =========================================================
+         LIVE TIME
+      ========================================================= */
+
+      const updateLive = () => {
+
+        const now = new Date();
+
+        document.getElementById('liveDate').textContent =
+          fullDateText(todayStart());
+
+        document.getElementById('liveTime').textContent =
+          now.toLocaleTimeString('sk-SK', {
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+          });
+
+        const end = new Date(now.getFullYear(), 11, 31);
+
+        document.getElementById('daysThisYear').textContent =
+          diffDays(todayStart(), end);
+
+      };
+
+
+      /* =========================================================
+         THEME
+      ========================================================= */
+
+      const themeBtn = document.getElementById('themeBtn');
+
+      let isDark = false;
+
+
+      const applyTheme = (dark) => {
+
+        isDark = dark;
+
+        document.body.classList.toggle('dark', isDark);
+
+        themeBtn.textContent = isDark ? '☾' : '☀';
+
+        themeBtn.setAttribute(
+          'aria-label',
+          isDark ? 'Prepnúť na svetlý režim' : 'Prepnúť na tmavý režim'
+        );
+
+        localStorage.setItem('birthday-theme', isDark ? 'dark' : 'light');
+
+      };
+
+
+      themeBtn.addEventListener('click', () => applyTheme(!isDark));
+
+
+      if (localStorage.getItem('birthday-theme') === 'dark') {
+        applyTheme(true);
+      }
+
+
+      /* =========================================================
+         CALENDAR NAVIGATION
+      ========================================================= */
+
+      window.calendarView = new Date();
+      window.calendarView.setDate(1);
+
+
+      document.getElementById('prev').onclick = () => {
+        window.calendarView.setMonth(window.calendarView.getMonth() - 1);
+        renderCalendar();
+      };
+
+
+      document.getElementById('next').onclick = () => {
+        window.calendarView.setMonth(window.calendarView.getMonth() + 1);
+        renderCalendar();
+      };
+
+
+      /* =========================================================
+         INIT
+      ========================================================= */
+
+      document.getElementById('peopleCount').textContent = PEOPLE.length;
+
+
+      renderPeople();
+      renderCalendar();
+      renderUpcoming();
+      renderAges();
+      updateLive();
+
+
+      setInterval(updateLive, 1000);
+
+
+      setInterval(() => {
+        renderPeople();
+        renderUpcoming();
+        renderAges();
+        renderCalendar();
+      }, 60000);
+
+
+      /* =========================================================
+         SERVICE WORKER + MANUÁLNA AKTUALIZÁCIA
+         OPRAVA: kompletná prepísaná logika pre spoľahlivosť na iOS
+      ========================================================= */
+
+      const brandIcon = document.getElementById('brandIcon');
+
+      let refreshing = false;
+
+
+      /* OPRAVA: pri controllerchange najprv zobraz toast, potom reload */
+      if ('serviceWorker' in navigator) {
+
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+
+          if (refreshing) return;
+
+          refreshing = true;
+
+          showToast('Aktualizujem…');
+
+          /* OPRAVA: oneskorenie 900 ms, aby používateľ stihol vidieť toast */
+          setTimeout(() => window.location.reload(), 900);
+
+        });
+
+      }
+
+
+      /* OPRAVA: kompletná nová funkcia checkForUpdates s updatefound eventom */
+      const checkForUpdates = async () => {
+
+        /* OPRAVA: hint pre iOS v Safari (nie standalone) */
+        const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
+        const isStandalone = window.navigator.standalone === true;
+
+        if (!('serviceWorker' in navigator)) {
+          showToast('Aktualizácie nie sú podporované');
+          return;
+        }
+
+        if (isIOS && !isStandalone) {
+          showToast('Pre spoľahlivé aktualizácie si appku pridaj na plochu 📱');
+        }
+
+        /* OPRAVA: vizuálny feedback – spinner + pulse */
+        brandIcon.classList.add('spinning');
+        brandIcon.classList.add('pulse');
+
+        /* OPRAVA: minimálna doba spinnera 1,8 s */
+        const minSpin = new Promise(r => setTimeout(r, 1800));
+
+        try {
+
+          const reg = await navigator.serviceWorker.getRegistration();
+
+          if (!reg) {
+            await navigator.serviceWorker.register('sw.js');
+            await minSpin;
+            brandIcon.classList.remove('spinning', 'pulse');
+            brandIcon.textContent = '✅';
+            setTimeout(() => brandIcon.textContent = '🎂', 2000);
+            showToast('Aplikácia pripravená offline ✨');
+            return;
+          }
+
+          /* OPRAVA: sledovanie updatefound eventu */
+          let newVersionFound = false;
+
+          const onUpdateFound = () => {
+            newVersionFound = true;
+          };
+
+          reg.addEventListener('updatefound', onUpdateFound);
+
+          /* Vynútiť kontrolu nového SW na serveri */
+          await reg.update();
+          await minSpin;
+
+          brandIcon.classList.remove('spinning');
+
+
+          /* OPRAVA: priorita – waiting > installing > aktuálne */
+          if (reg.waiting) {
+
+            reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+            showToast('Aktualizujem…');
+            /* spinner necháme bežať, kým nepríde controllerchange */
+            return;
+          }
+
+          if (reg.installing || newVersionFound) {
+
+            brandIcon.classList.remove('pulse');
+            showToast('Sťahujem novú verziu…');
+            return;
+          }
+
+          /* Všetko je aktuálne */
+          brandIcon.classList.remove('pulse');
+          brandIcon.textContent = '✅';
+          setTimeout(() => brandIcon.textContent = '🎂', 2000);
+          showToast('Máš najnovšiu verziu ✓');
+
+        } catch (err) {
+
+          await minSpin;
+          brandIcon.classList.remove('spinning', 'pulse');
+          brandIcon.textContent = '⚠️';
+          setTimeout(() => brandIcon.textContent = '🎂', 2000);
+          showToast('Aktualizácia zlyhala');
+
+        }
+
+      };
+
+
+      /* Klik + klávesnica (Enter / Space) pre prístupnosť */
+      brandIcon.addEventListener('click', checkForUpdates);
+
+      brandIcon.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          checkForUpdates();
+        }
+      });
+
+
+      /* OPRAVA: poistka 12 s namiesto 8 s – aby neprerušila dlhšiu aktualizáciu */
+      setInterval(() => {
+        if (!document.querySelector('.brand-icon.spinning')) return;
+        /* Iba ak spinner visí príliš dlho bez zmeny */
+        brandIcon.classList.remove('spinning', 'pulse');
+      }, 12000);
+
+
+      /* Registrácia SW pri načítaní */
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('sw.js').catch(() => {});
+        });
+      }
+
+    })();
+  </script>
+
+</body>
+</html>
